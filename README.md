@@ -3,17 +3,19 @@
 Production-grade, full-stack **Mini ERP + CRM Operations Portal** built for wholesale and distribution enterprises to streamline client management, inventory tracking, stock movements, and sales delivery challans with ACID database transaction safety.
 
 ![Tech Stack](https://img.shields.io/badge/Stack-Express_|_React_|_TypeScript_|_Prisma_|_SQLite/PostgreSQL-indigo)
-![Build Status](https://img.shields.io/badge/Tests-13_Passed_100%25-success)
+![Build Status](https://img.shields.io/badge/Tests-16_Passed_100%25-success)
+![Vercel Target](https://img.shields.io/badge/Vercel_Account-srinath18-black?logo=vercel)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
 ---
 
 ## 🌟 Key Highlights & Features
 
-1. **Role-Based Access Control (RBAC)**
-   - Supported Roles: `ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`.
-   - JWT-based authentication with bcrypt password hashing.
-   - Dynamic UI access control and strict backend middleware route guards.
+1. **User Registration & Authentication (JWT + bcrypt)**
+   - Sign In with either **Username / Full Name** or **Email Address**.
+   - Public account registration with full name, email, phone number, role selection, and matching password confirmation.
+   - Automatic redirection to Sign In tab with pre-filled credentials upon account creation.
+   - Roles Supported: `ADMIN`, `SALES`, `WAREHOUSE`, `ACCOUNTS`.
 
 2. **Customer CRM Module**
    - Manage Lead, Active, and Inactive customer accounts across Retail, Wholesale, and Distributor channels.
@@ -44,61 +46,64 @@ Production-grade, full-stack **Mini ERP + CRM Operations Portal** built for whol
 
 6. **Modern Dark Glassmorphic Dashboard UI**
    - Built with React 18, TypeScript, React Router, Vite, and custom CSS design system.
-   - Quick-switch test credential buttons on login screen for instant role testing.
    - Interactive tables, KPI cards, custom modal dialogs, and toast notifications.
 
 7. **Automated Test Suite & Postman Collection**
-   - Jest & Supertest integration suite validating Auth, CRM, Inventory, and Transaction Rollback safety.
+   - Jest & Supertest integration suite validating Auth, Registration, CRM, Inventory, and Transaction Rollback safety.
    - Postman Collection (`postman/Mini-ERP-CRM.postman_collection.json`) with auto-saving JWT environment variables.
 
 ---
 
-## 🏗️ Architecture & Monorepo Structure
+## 🚀 Vercel Deployment Instructions (for https://vercel.com/srinath18)
 
-```
-mini-erp-crm/
-├── backend/
-│   ├── src/
-│   │   ├── config/ (env, prisma client)
-│   │   ├── controllers/ (auth, customer, product, stock, challan, dashboard)
-│   │   ├── middleware/ (auth, rbac, error, validate)
-│   │   ├── routes/ (api router index, modular routes)
-│   │   ├── validators/ (zod request schemas)
-│   │   ├── utils/ (challan number generator, response formatter)
-│   │   ├── types/ (domain types & role definitions)
-│   │   ├── app.ts (express setup & middleware)
-│   │   └── server.ts (http server launcher)
-│   ├── prisma/
-│   │   ├── schema.prisma (SQLite local dev schema)
-│   │   ├── schema.postgresql.prisma (PostgreSQL production schema)
-│   │   └── seed.ts (Database seed script)
-│   ├── tests/
-│   │   └── api.test.ts (Supertest integration test suite)
-│   ├── Dockerfile
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/
-│   ├── src/
-│   │   ├── components/ (Navbar, Sidebar, StatCard, Modal, ConfirmDialog, StatusBadge, Toast)
-│   │   ├── context/ (AuthContext with role guards)
-│   │   ├── layouts/ (MainLayout)
-│   │   ├── pages/ (Login, Dashboard, Customers, CustomerDetail, Products, ProductDetail, Inventory, Challans, ChallanCreate, ChallanDetail, Profile, Unauthorized)
-│   │   ├── services/ (axios API client & module services)
-│   │   ├── types/ (domain interfaces)
-│   │   ├── routes/ (AppRoutes, ProtectedRoute, RoleGuard)
-│   │   ├── App.tsx
-│   │   ├── main.tsx
-│   │   └── index.css (Dark glassmorphic styling system)
-│   ├── Dockerfile
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── tsconfig.json
-├── postman/
-│   └── Mini-ERP-CRM.postman_collection.json
-├── docker-compose.yml
-├── README.md
-└── .gitignore
-```
+### Option A: Deploying via Vercel CLI (Recommended Direct Command)
+
+1. Open PowerShell and navigate to the frontend directory:
+   ```powershell
+   cd C:\Users\SRINATH\.gemini\antigravity\scratch\mini-erp-crm\frontend
+   ```
+
+2. Execute Vercel production deployment:
+   ```powershell
+   npx vercel --prod
+   ```
+
+3. Follow the interactive prompts:
+   - **Log in to Vercel**: Select **Continue with GitHub** or your preferred login for account `srinath18`.
+   - **Set up and deploy**: `y`
+   - **Which scope do you want to deploy to?**: Select `srinath18`
+   - **Link to existing project?**: `n`
+   - **Project Name**: `mini-erp-crm`
+   - **Directory**: `./`
+   - **Build Settings**: Keep defaults (Vercel will auto-detect Vite build).
+
+4. Vercel will build and output your production deployment link:
+   `https://mini-erp-crm-srinath18.vercel.app`
+
+---
+
+### Option B: Deploying via GitHub Integration
+
+1. Create a repository on GitHub under user `srinath18`:
+   ```powershell
+   cd C:\Users\SRINATH\.gemini\antigravity\scratch\mini-erp-crm
+   git remote add origin https://github.com/srinath18/mini-erp-crm.git
+   git branch -M main
+   git push -u origin main
+   ```
+
+2. Open Vercel Project Creation page: [https://vercel.com/new](https://vercel.com/new) under account `srinath18`.
+
+3. Import the `srinath18/mini-erp-crm` repository.
+
+4. Configure Project Settings:
+   - **Framework Preset**: `Vite`
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `dist`
+   - **Environment Variable**: `VITE_API_BASE_URL=https://your-backend-api.onrender.com/api`
+
+5. Click **Deploy**.
 
 ---
 
@@ -131,36 +136,6 @@ The database seed script automatically provisions test accounts for each role:
 | **Warehouse** | `warehouse@example.com` | `Warehouse@123` | Product catalog & Stock movements |
 | **Accounts** | `accounts@example.com` | `Accounts@123` | Financial & Challan reporting |
 
-> ⚡ **Quick Login Note**: The frontend login page includes quick-selection buttons to pre-fill test credentials with one click.
-
----
-
-## ⚡ Quick Start Guide (Local Development)
-
-### 1. Prerequisites
-- Node.js (v18+)
-- npm (v9+)
-
-### 2. Backend Setup
-```bash
-cd backend
-npm install
-npx prisma generate
-npx prisma db push
-npm run prisma:seed
-npm run dev
-```
-Backend API will start at `http://localhost:5000`.
-
-### 3. Frontend Setup
-In a separate terminal:
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Frontend Web App will open at `http://localhost:5173`.
-
 ---
 
 ## 🧪 Running Automated Tests
@@ -170,48 +145,7 @@ Run the backend Jest integration test suite:
 cd backend
 npm test
 ```
-This runs 13 automated tests verifying authentication, CRM creation, inventory controls, role authorization, and the ACID transaction rollback logic.
-
----
-
-## 🐳 Running with Docker Compose
-
-Spin up the full multi-container stack (Frontend + Backend + PostgreSQL):
-```bash
-docker compose up --build
-```
-- **Frontend App**: `http://localhost:80`
-- **Backend REST API**: `http://localhost:5000`
-- **PostgreSQL DB**: `localhost:5432`
-
----
-
-## 📫 Postman API Collection
-
-1. Open Postman and import `postman/Mini-ERP-CRM.postman_collection.json`.
-2. Execute **1. Authentication -> Login (Admin)**.
-3. The Postman collection script automatically saves the returned JWT token to the `{{token}}` variable for subsequent requests.
-
----
-
-## 🌐 Production Deployment
-
-### Frontend (Vercel / Netlify / Render Static)
-- Build command: `npm run build`
-- Output directory: `dist`
-- Environment Variable: `VITE_API_BASE_URL=https://your-backend-api.onrender.com/api`
-
-### Backend (Render / Railway / Fly.io)
-- Start command: `npm run start` (or `node dist/server.js`)
-- Environment Variables:
-  ```env
-  PORT=5000
-  NODE_ENV=production
-  DATABASE_URL=postgresql://user:password@ep-host.neon.tech/mini_erp_crm?sslmode=require
-  JWT_SECRET=super_secure_production_secret
-  JWT_EXPIRES_IN=1d
-  FRONTEND_URL=https://your-frontend.vercel.app
-  ```
+This runs 16 automated tests verifying authentication, registration, CRM creation, inventory controls, role authorization, and the ACID transaction rollback logic.
 
 ---
 
