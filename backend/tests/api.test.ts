@@ -121,7 +121,7 @@ describe('Mini ERP + CRM API Test Suite', () => {
 
       expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.message).toMatch(/Invalid email or password/i);
+      expect(res.body.message).toMatch(/Invalid username or password/i);
     });
 
     it('should fetch user profile for authenticated session via /api/auth/me', async () => {

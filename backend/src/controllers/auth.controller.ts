@@ -25,7 +25,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 
     const user = await prisma.user.create({
       data: {
-        name,
+        name: name.trim(),
         email: cleanEmail,
         passwordHash,
         role: role || 'SALES',
@@ -53,18 +53,25 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
+    const identifier = (email || '').trim();
 
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+    // Support lookup by either email address OR username/name!
+    const user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email: { equals: identifier.toLowerCase() } },
+          { name: { equals: identifier } },
+        ],
+      },
     });
 
     if (!user) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new UnauthorizedError('Invalid username or password');
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      throw new UnauthorizedError('Invalid email or password');
+      throw new UnauthorizedError('Invalid username or password');
     }
 
     const payload = {

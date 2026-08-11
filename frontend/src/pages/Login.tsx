@@ -15,13 +15,17 @@ import {
   CheckCircle2,
   UserPlus,
   LogIn,
+  AlertCircle,
 } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
 
+  // Inline Error Banner
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   // Sign In Form State
-  const [loginEmail, setLoginEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginSubmitting, setLoginSubmitting] = useState(false);
 
@@ -41,18 +45,22 @@ export const Login: React.FC = () => {
   // Handle Sign In Submit
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) {
-      showToast('Please fill in both email address and password', 'error');
+    setErrorMessage(null);
+
+    if (!loginIdentifier || !loginPassword) {
+      setErrorMessage('Please enter your username/email and password');
       return;
     }
 
     setLoginSubmitting(true);
     try {
-      await login(loginEmail, loginPassword);
-      showToast('Login successful! Welcome to Mini ERP + CRM', 'success');
+      await login(loginIdentifier, loginPassword);
+      showToast('Login successful! Welcome to Operations Portal', 'success');
       navigate('/dashboard');
     } catch (err: any) {
-      showToast(err.message || 'Login failed. Please check your credentials.', 'error');
+      const msg = err.message || 'Invalid username or password';
+      setErrorMessage(msg);
+      showToast(msg, 'error');
     } finally {
       setLoginSubmitting(false);
     }
@@ -61,18 +69,20 @@ export const Login: React.FC = () => {
   // Handle Account Registration Submit
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(null);
+
     if (!regName || !regEmail || !regPassword || !regConfirmPassword) {
-      showToast('Please fill in all required fields', 'error');
+      setErrorMessage('Please fill in all required fields');
       return;
     }
 
     if (regPassword !== regConfirmPassword) {
-      showToast('Passwords do not match! Please check and confirm.', 'error');
+      setErrorMessage('Passwords do not match! Please verify your password confirmation.');
       return;
     }
 
     if (regPassword.length < 6) {
-      showToast('Password must be at least 6 characters long', 'error');
+      setErrorMessage('Password must be at least 6 characters long');
       return;
     }
 
@@ -87,11 +97,12 @@ export const Login: React.FC = () => {
         confirmPassword: regConfirmPassword,
       });
 
-      showToast('Account created successfully! Please sign in with your email and password.', 'success');
+      showToast('Account created successfully! Please sign in with your username/email and password.', 'success');
       
-      // Pre-fill Sign In email with newly created account
-      setLoginEmail(regEmail);
+      // Pre-fill Sign In with newly registered email or name
+      setLoginIdentifier(regEmail);
       setLoginPassword('');
+      setErrorMessage(null);
       
       // Reset Sign Up form
       setRegName('');
@@ -100,18 +111,21 @@ export const Login: React.FC = () => {
       setRegPassword('');
       setRegConfirmPassword('');
 
-      // Switch back to Sign In tab automatically
+      // Switch back to Sign In view
       setActiveTab('login');
     } catch (err: any) {
-      showToast(err.message || 'Registration failed', 'error');
+      const msg = err.message || 'Registration failed';
+      setErrorMessage(msg);
+      showToast(msg, 'error');
     } finally {
       setRegSubmitting(false);
     }
   };
 
   const setTestUser = (testEmail: string, testPass: string) => {
+    setErrorMessage(null);
     setActiveTab('login');
-    setLoginEmail(testEmail);
+    setLoginIdentifier(testEmail);
     setLoginPassword(testPass);
   };
 
@@ -146,13 +160,35 @@ export const Login: React.FC = () => {
           >
             <Building2 size={26} />
           </div>
-          <h1 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-            Mini ERP + CRM Portal
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+            Operations Portal
           </h1>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8125rem', marginTop: '0.125rem' }}>
-            Wholesale & Distribution Operations Management
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+            {activeTab === 'login' ? 'Sign in to manage your ERP & CRM tasks' : 'Create a new operations user account'}
           </p>
         </div>
+
+        {/* Inline Red Alert Banner */}
+        {errorMessage && (
+          <div
+            style={{
+              padding: '0.75rem 1rem',
+              borderRadius: 'var(--radius-md)',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              color: '#F87171',
+              fontSize: '0.875rem',
+              fontWeight: 500,
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+            }}
+          >
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
         {/* Navigation Tabs (Sign In / Sign Up) */}
         <div
@@ -167,7 +203,7 @@ export const Login: React.FC = () => {
         >
           <button
             type="button"
-            onClick={() => setActiveTab('login')}
+            onClick={() => { setActiveTab('login'); setErrorMessage(null); }}
             style={{
               flex: 1,
               padding: '0.625rem',
@@ -190,7 +226,7 @@ export const Login: React.FC = () => {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab('register')}
+            onClick={() => { setActiveTab('register'); setErrorMessage(null); }}
             style={{
               flex: 1,
               padding: '0.625rem',
@@ -209,7 +245,7 @@ export const Login: React.FC = () => {
               boxShadow: activeTab === 'register' ? '0 2px 8px rgba(99, 102, 241, 0.3)' : 'none',
             }}
           >
-            <UserPlus size={16} /> Create Account
+            <UserPlus size={16} /> Register
           </button>
         </div>
 
@@ -218,19 +254,19 @@ export const Login: React.FC = () => {
           <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.125rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.375rem' }}>
-                Email Address
+                Username / Email
               </label>
               <div style={{ position: 'relative' }}>
                 <input
-                  type="email"
+                  type="text"
                   className="glass-input"
-                  placeholder="name@company.com"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
+                  placeholder="Enter username or email address"
+                  value={loginIdentifier}
+                  onChange={(e) => setLoginIdentifier(e.target.value)}
                   style={{ paddingLeft: '2.5rem' }}
                   required
                 />
-                <Mail size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
+                <User size={18} color="var(--text-muted)" style={{ position: 'absolute', left: '0.875rem', top: '50%', transform: 'translateY(-50%)' }} />
               </div>
             </div>
 
@@ -253,8 +289,19 @@ export const Login: React.FC = () => {
             </div>
 
             <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }} disabled={loginSubmitting}>
-              {loginSubmitting ? 'Signing in...' : 'Sign In to Portal'}
+              {loginSubmitting ? 'Signing in...' : 'Sign In'}
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: '0.75rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={() => { setActiveTab('register'); setErrorMessage(null); }}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Register here
+              </button>
+            </div>
           </form>
         )}
 
@@ -263,13 +310,13 @@ export const Login: React.FC = () => {
           <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                Full Name *
+                Full Name / Username *
               </label>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
                   className="glass-input"
-                  placeholder="John Doe"
+                  placeholder="srinath"
                   value={regName}
                   onChange={(e) => setRegName(e.target.value)}
                   style={{ paddingLeft: '2.5rem' }}
@@ -288,7 +335,7 @@ export const Login: React.FC = () => {
                   <input
                     type="email"
                     className="glass-input"
-                    placeholder="john@company.com"
+                    placeholder="srinath@example.com"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     style={{ paddingLeft: '2.5rem' }}
@@ -326,9 +373,9 @@ export const Login: React.FC = () => {
                 onChange={(e) => setRegRole(e.target.value as Role)}
               >
                 <option value="SALES">Sales Manager (CRM & Challans)</option>
-                <option value="WAREHOUSE">Warehouse Supervisor (Products & Inventory)</option>
-                <option value="ACCOUNTS">Accounts Specialist (Financial Reports)</option>
-                <option value="ADMIN">System Administrator (Full Access)</option>
+                <option value="WAREHOUSE">Warehouse Supervisor (Products & Stock)</option>
+                <option value="ACCOUNTS">Accounts Specialist (Financial Views)</option>
+                <option value="ADMIN">System Administrator (Full Control)</option>
               </select>
             </div>
 
@@ -373,10 +420,21 @@ export const Login: React.FC = () => {
             <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }} disabled={regSubmitting}>
               {regSubmitting ? 'Creating Account...' : 'Create Account & Proceed to Sign In'}
             </button>
+
+            <div style={{ textAlign: 'center', marginTop: '0.5rem', fontSize: '0.8125rem', color: 'var(--text-secondary)' }}>
+              Already have an account?{' '}
+              <button
+                type="button"
+                onClick={() => { setActiveTab('login'); setErrorMessage(null); }}
+                style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+              >
+                Sign in here
+              </button>
+            </div>
           </form>
         )}
 
-        {/* Quick Pre-seeded Test Credentials Switcher */}
+        {/* Quick Pre-seeded Accounts Switcher */}
         <div style={{ marginTop: '1.75rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
           <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem', textAlign: 'center', letterSpacing: '0.05em' }}>
             ⚡ Quick Test Pre-seeded Accounts
