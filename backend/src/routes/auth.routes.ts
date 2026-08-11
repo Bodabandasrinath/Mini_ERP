@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { login, getMe } from '../controllers/auth.controller';
+import { login, register, getMe } from '../controllers/auth.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 import { validateRequest } from '../middleware/validate.middleware';
-import { loginSchema } from '../validators/auth.validator';
+import { loginSchema, registerSchema } from '../validators/auth.validator';
 
 const router = Router();
 
+router.post('/register', validateRequest(registerSchema), register);
 router.post('/login', validateRequest(loginSchema), login);
 router.get('/me', authenticateToken, getMe);
 

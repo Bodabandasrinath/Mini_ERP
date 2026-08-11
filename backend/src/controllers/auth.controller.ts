@@ -4,8 +4,51 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { prisma } from '../config/prisma';
 import { config } from '../config';
 import { sendSuccess } from '../utils/response';
-import { UnauthorizedError } from '../utils/errors';
+import { UnauthorizedError, ConflictError } from '../utils/errors';
 import { AuthenticatedRequest } from '../types';
+
+export const register = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, email, role, password } = req.body;
+    const cleanEmail = email.toLowerCase().trim();
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+    });
+
+    if (existingUser) {
+      throw new ConflictError('A user with this email address already exists');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email: cleanEmail,
+        passwordHash,
+        role: role || 'SALES',
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+
+    return sendSuccess(
+      res,
+      user,
+      'User account registered successfully! You can now sign in.',
+      201
+    );
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {

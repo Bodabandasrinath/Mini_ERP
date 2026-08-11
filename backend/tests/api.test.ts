@@ -49,7 +49,49 @@ describe('Mini ERP + CRM API Test Suite', () => {
     await prisma.$disconnect();
   });
 
-  describe('1. Authentication APIs', () => {
+  describe('1. Authentication & Registration APIs', () => {
+    it('should register a new user with name, email, phone, role, password, confirmPassword', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          name: 'New Registered User',
+          email: 'newuser@example.com',
+          mobileNumber: '+919876543210',
+          role: 'SALES',
+          password: 'Password123',
+          confirmPassword: 'Password123',
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.email).toBe('newuser@example.com');
+    });
+
+    it('should reject registration if password and confirmPassword do not match', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({
+          name: 'Mismatch User',
+          email: 'mismatch@example.com',
+          password: 'Password123',
+          confirmPassword: 'DifferentPassword456',
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toMatch(/Validation failed/i);
+    });
+
+    it('should sign in using newly registered credentials', async () => {
+      const res = await request(app)
+        .post('/api/auth/login')
+        .send({ email: 'newuser@example.com', password: 'Password123' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.token).toBeDefined();
+    });
+
     it('should successfully log in Admin user and return JWT token', async () => {
       const res = await request(app)
         .post('/api/auth/login')
@@ -151,7 +193,7 @@ describe('Mini ERP + CRM API Test Suite', () => {
           sku: 'SKU-TEST-VLV-B',
           category: 'Valves',
           unitPrice: 400,
-          currentStock: 2, // Low stock on purpose for transaction test!
+          currentStock: 2,
           minimumStockAlertQuantity: 5,
           warehouseLocation: 'Bay T-02',
         });
@@ -181,7 +223,7 @@ describe('Mini ERP + CRM API Test Suite', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           productId: testProductId2,
-          quantityChanged: 999, // Exceeds currentStock of 2!
+          quantityChanged: 999,
           movementType: 'OUT',
           reason: 'Invalid Large Outbound',
         });
@@ -211,9 +253,6 @@ describe('Mini ERP + CRM API Test Suite', () => {
     });
 
     it('CRITICAL TEST: Challan Confirmation Transaction Rollback when ONE item has insufficient stock', async () => {
-      // Product 1 has stock 60
-      // Product 2 has stock 2
-      // We request 10 of Product 1 and 10 of Product 2.
       const draftRes = await request(app)
         .post('/api/challans')
         .set('Authorization', `Bearer ${salesToken}`)
@@ -221,13 +260,12 @@ describe('Mini ERP + CRM API Test Suite', () => {
           customerId: testCustomerId,
           items: [
             { productId: testProductId1, quantity: 10 },
-            { productId: testProductId2, quantity: 10 }, // 10 > 2 (Insufficient!)
+            { productId: testProductId2, quantity: 10 },
           ],
         });
 
       const challanId = draftRes.body.data.id;
 
-      // Attempt to confirm
       const confirmRes = await request(app)
         .post(`/api/challans/${challanId}/confirm`)
         .set('Authorization', `Bearer ${salesToken}`);
@@ -236,17 +274,14 @@ describe('Mini ERP + CRM API Test Suite', () => {
       expect(confirmRes.body.success).toBe(false);
       expect(confirmRes.body.message).toMatch(/Insufficient stock/i);
 
-      // Verify Rollback: Product 1 stock MUST still be 60 (NOT reduced by 10)!
       const checkProd1 = await prisma.product.findUnique({ where: { id: testProductId1 } });
       expect(checkProd1?.currentStock).toBe(60);
 
-      // Verify Challan status MUST still be DRAFT (NOT confirmed)!
       const checkChallan = await prisma.challan.findUnique({ where: { id: challanId } });
       expect(checkChallan?.status).toBe('DRAFT');
     });
 
     it('should successfully confirm Challan when all items have sufficient stock', async () => {
-      // Create valid challan with 5 of Product 1
       const draftRes = await request(app)
         .post('/api/challans')
         .set('Authorization', `Bearer ${salesToken}`)
@@ -264,7 +299,6 @@ describe('Mini ERP + CRM API Test Suite', () => {
       expect(confirmRes.status).toBe(200);
       expect(confirmRes.body.data.status).toBe('CONFIRMED');
 
-      // Verify stock reduced from 60 to 55
       const checkProd1 = await prisma.product.findUnique({ where: { id: testProductId1 } });
       expect(checkProd1?.currentStock).toBe(55);
     });
